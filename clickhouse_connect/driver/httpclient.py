@@ -95,14 +95,10 @@ class HttpClient(Client):
             session.headers['X-ClickHouse-User'] = username
             session.headers['X-ClickHouse-SSL-Certificate-Auth'] = 'on'
         else:
-            session.auth = (username, password if password else '') if username else None
+            session.auth = (username, password or '') if username else None
         session.verify = False
         if interface == 'https':
-            if verify and ca_cert:
-                session.verify = ca_cert
-            else:
-                session.verify = verify
-
+            session.verify = ca_cert if verify and ca_cert else verify
         # Remove the default session adapters, they are not used and this avoids issues with their connection pools
         session.adapters.pop('http://').close()
         session.adapters.pop('https://').close()
@@ -148,7 +144,7 @@ class HttpClient(Client):
     def _query_with_context(self, context: QueryContext) -> QueryResult:
         headers = {'Content-Type': 'text/plain; charset=utf-8'}
         params = {'database': self.database}
-        params.update(self._validate_settings(context.settings, True))
+        params |= self._validate_settings(context.settings, True)
         if columns_only_re.search(context.uncommented_query):
             response = self._raw_request(f'{context.final_query}\n FORMAT JSON',
                                          params, headers, retries=self.query_retries)
@@ -196,13 +192,13 @@ class HttpClient(Client):
         See BaseClient doc_string for this method
         """
         column_ids = [quote_identifier(x) for x in column_names]
-        write_format = fmt if fmt else self.write_format
+        write_format = fmt or self.write_format
         headers = {'Content-Type': 'application/octet-stream'}
         params = {'query': f"INSERT INTO {table} ({', '.join(column_ids)}) FORMAT {write_format}",
                   'database': self.database}
         if isinstance(insert_block, str):
             insert_block = insert_block.encode()
-        params.update(self._validate_settings(settings, True))
+        params |= self._validate_settings(settings, True)
         response = self._raw_request(insert_block, params, headers)
         logger.debug('Insert response code: %d, content: %s', response.status_code, response.content)
 
@@ -233,7 +229,7 @@ class HttpClient(Client):
             params['query'] = cmd
         if use_database:
             params['database'] = self.database
-        params.update(self._validate_settings(settings, True))
+        params |= self._validate_settings(settings, True)
         method = 'POST' if payload else 'GET'
         response = self._raw_request(payload, params, headers, method)
         result = response.content.decode('utf8')[:-1].split('\t')
@@ -263,16 +259,14 @@ class HttpClient(Client):
                                                           params=params)
             except RequestException as ex:
                 rex_context = ex.__context__
-                if rex_context and isinstance(rex_context.__context__, RemoteDisconnected):
-                    # See https://github.com/psf/requests/issues/4664
-                    # The server closed the connection, probably because the Keep Alive has expired
-                    # We should be safe to retry, as ClickHouse should not have processed anything on a connection
-                    # that it killed.  We also only retry this once, as multiple disconnects are unlikely to be
-                    # related to the Keep Alive settings
-                    if attempts == 1:
-                        logger.debug('Retrying remotely closed connection')
-                        attempts = 0
-                        continue
+                if (
+                    rex_context
+                    and isinstance(rex_context.__context__, RemoteDisconnected)
+                    and attempts == 1
+                ):
+                    logger.debug('Retrying remotely closed connection')
+                    attempts = 0
+                    continue
                 logger.exception('Unexpected Http Driver Exception')
                 raise OperationalError(f'Error executing HTTP request {self.url}') from ex
             if 200 <= response.status_code < 300:
@@ -282,7 +276,7 @@ class HttpClient(Client):
             if response.content:
                 err_msg = response.content.decode(errors='backslashreplace')
                 logger.error(str(err_msg))
-                err_str = f':{err_str}\n {err_msg[0:240]}'
+                err_str = f':{err_str}\n {err_msg[:240]}'
             if response.status_code not in (429, 503, 504):
                 raise DatabaseError(err_str)
             if attempts > retries:

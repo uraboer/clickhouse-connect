@@ -21,11 +21,11 @@ def test_cursor(test_engine: Engine):
 
 def test_execute(test_engine: Engine):
     connection = test_engine.connect()
-    rows = list(row for row in connection.execute(test_query))
+    rows = list(connection.execute(test_query))
     assert len(rows) == 2
 
-    rows = list(row for row in connection.execute('DROP TABLE IF EXISTS dummy_table'))
+    rows = list(connection.execute('DROP TABLE IF EXISTS dummy_table'))
     assert rows[0][0] == ''
 
-    rows = list(row for row in connection.execute('describe TABLE system.columns'))
+    rows = list(connection.execute('describe TABLE system.columns'))
     assert len(rows) > 5

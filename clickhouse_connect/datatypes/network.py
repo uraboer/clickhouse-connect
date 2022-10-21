@@ -52,12 +52,17 @@ class IPv4(ArrayType):
         if isinstance(first, str):
             fixed = 24, 16, 8, 0
             # pylint: disable=consider-using-generator
-            column = [(sum([int(b) << fixed[ix] for ix, b in enumerate(x.split('.'))])) if x else 0 for x in column]
+            column = [
+                sum(int(b) << fixed[ix] for ix, b in enumerate(x.split('.')))
+                if x
+                else 0
+                for x in column
+            ]
+
+        elif self.nullable:
+            column = [x._ip if x else 0 for x in column]
         else:
-            if self.nullable:
-                column = [x._ip if x else 0 for x in column]
-            else:
-                column = [x._ip for x in column]
+            column = [x._ip for x in column]
         write_array(self._array_type, column, dest)
 
 
@@ -126,9 +131,9 @@ class IPv6(ClickHouseType):
         v = V6_NULL
         first = self._first_value(column)
         v4mask = IPV4_V6_MASK
-        af6 = socket.AF_INET6
-        tov6 = socket.inet_pton
         if isinstance(first, str):
+            af6 = socket.AF_INET6
+            tov6 = socket.inet_pton
             for x in column:
                 if x is None:
                     dest += v

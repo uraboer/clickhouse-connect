@@ -2,8 +2,7 @@ import dev_config
 
 SUPERSET_WEBSERVER_PORT = getattr(dev_config, 'SUPERSET_WEBSERVER_PORT', 8088)
 SECRET_KEY = 'clickhouse_dev'
-db_uri = getattr(dev_config, 'SQLALCHEMY_DATABASE_URI', None)
-if db_uri:
+if db_uri := getattr(dev_config, 'SQLALCHEMY_DATABASE_URI', None):
     SQLALCHEMY_DATABASE_URI = db_uri
 SIP_15_ENABLED = True
 

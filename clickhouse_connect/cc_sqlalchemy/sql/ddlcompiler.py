@@ -17,8 +17,7 @@ class ChDDLCompiler(DDLCompiler):
         table = create.element
         text = f'CREATE TABLE {format_table(table)} ('
         text += ', '.join([self.get_column_specification(c.element) for c in create.columns])
-        return text + ') ' + table.engine.compile()
+        return f'{text}) {table.engine.compile()}'
 
     def get_column_specification(self, column: Column, **_):
-        text = f'{quote_identifier(column.name)} {column.type.compile()}'
-        return text
+        return f'{quote_identifier(column.name)} {column.type.compile()}'

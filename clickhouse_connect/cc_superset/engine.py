@@ -81,9 +81,7 @@ class ClickHouseEngineSpec(BaseEngineSpec, BasicParametersMixin):
         new_exception = cls.get_dbapi_exception_mapping().get(type(exception))
         if new_exception == SupersetDBAPIDatabaseError:
             return SupersetDBAPIDatabaseError('Connection failed')
-        if not new_exception:
-            return exception
-        return new_exception(str(exception))
+        return new_exception(str(exception)) if new_exception else exception
 
     @classmethod
     def convert_dttm(cls, target_type: str, dttm: datetime, *_args, **_kwargs) -> Optional[str]:
@@ -160,7 +158,6 @@ class ClickHouseEngineSpec(BaseEngineSpec, BasicParametersMixin):
             encryption=encryption)
 
     @classmethod
-    # pylint: disable=arguments-renamed
     def validate_parameters(cls, properties) -> List[SupersetError]:
         # The newest versions of superset send a "properties" object with a parameters key, instead of just
         # the parameters, so we hack to be compatible
@@ -193,10 +190,15 @@ class ClickHouseEngineSpec(BaseEngineSpec, BasicParametersMixin):
                 SupersetErrorType.CONNECTION_INVALID_PORT_ERROR,
                 ErrorLevel.ERROR,
                 {'invalid': ['port']})]
-        if not is_port_open(host, port):
-            return [SupersetError(
-                'The port is closed.',
-                SupersetErrorType.CONNECTION_PORT_CLOSED_ERROR,
-                ErrorLevel.ERROR,
-                {'invalid': ['port']})]
-        return []
+        return (
+            []
+            if is_port_open(host, port)
+            else [
+                SupersetError(
+                    'The port is closed.',
+                    SupersetErrorType.CONNECTION_PORT_CLOSED_ERROR,
+                    ErrorLevel.ERROR,
+                    {'invalid': ['port']},
+                )
+            ]
+        )

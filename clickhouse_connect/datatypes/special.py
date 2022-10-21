@@ -83,10 +83,7 @@ class UUID(ClickHouseType):
                     dest += empty
         elif isinstance(first, (bytes, bytearray, memoryview)):
             for v in column:
-                if v:
-                    dest += bytes(reversed(v[:8])) + bytes(reversed(v[8:]))
-                else:
-                    dest += empty
+                dest += bytes(reversed(v[:8])) + bytes(reversed(v[8:])) if v else empty
         else:
             dest += empty * len(column)
 

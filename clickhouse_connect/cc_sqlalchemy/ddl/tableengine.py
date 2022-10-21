@@ -62,7 +62,7 @@ class TableEngine(SchemaEventTarget, Visitable):
             if v is not None:
                 params.append(tuple_expr(param_name.upper().replace('_', ' '), v))
 
-        self.full_engine = 'Engine ' + self.name
+        self.full_engine = f'Engine {self.name}'
         if engine_args:
             self.full_engine += f'({", ".join(engine_args)})'
         if params:

@@ -59,7 +59,7 @@ def write_array(code: str, column: Sequence, dest: MutableSequence):
     :param dest: Destination byte buffer
     """
     if column and not isinstance(column[0], (int, float)):
-        if code in ('f', 'F', 'd', 'D'):
+        if code in {'f', 'F', 'd', 'D'}:
             column = [float(x) for x in column]
         else:
             column = [int(x) for x in column]
@@ -162,12 +162,8 @@ def decimal_size(prec: int):
         return 32
     if prec < 19:
         return 64
-    if prec < 39:
-        return 128
-    return 256
+    return 128 if prec < 39 else 256
 
 
 def unescape_identifier(x: str) -> str:
-    if x.startswith('`') and x.endswith('`'):
-        return x[1:-1]
-    return x
+    return x[1:-1] if x.startswith('`') and x.endswith('`') else x

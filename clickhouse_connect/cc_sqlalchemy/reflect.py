@@ -41,10 +41,10 @@ def get_columns(connection, table_name, schema=None, **_kwargs):
 def get_engine(connection, table_name, schema=None):
     result_set = connection.execute(
         f"SELECT engine_full FROM system.tables WHERE database = '{schema}' and name = '{table_name}'")
-    row = next(result_set, None)
-    if not row:
+    if row := next(result_set, None):
+        return build_engine(row.engine_full)
+    else:
         raise NoResultFound(f'Table {schema}.{table_name} does not exist')
-    return build_engine(row.engine_full)
 
 
 def reflect_table(connection, table, include_columns, exclude_columns, *_args, **_kwargs):

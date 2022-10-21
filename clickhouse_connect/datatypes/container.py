@@ -79,7 +79,8 @@ class Tuple(ClickHouseType):
         self.element_names = type_def.keys
         self.element_types = [get_from_name(name) for name in type_def.values]
         if self.element_names:
-            self._name_suffix = f"({', '.join(k + ' ' + str(v) for k, v in zip(type_def.keys, type_def.values))})"
+            self._name_suffix = f"({', '.join(f'{k} {str(v)}' for k, v in zip(type_def.keys, type_def.values))})"
+
         else:
             self._name_suffix = type_def.arg_str
 
@@ -87,9 +88,7 @@ class Tuple(ClickHouseType):
     def python_type(self):
         if self.read_format() == 'tuple':
             return tuple
-        if self.read_format() == 'json':
-            return str
-        return dict
+        return str if self.read_format() == 'json' else dict
 
     def read_native_prefix(self, source: Sequence, loc: int):
         for e_type in self.element_types:

@@ -76,11 +76,9 @@ def main():
     if col_names:
         if 'all' in col_names:
             col_names = list(columns.keys())
-        else:
-            invalid = set(col_names).difference(set(columns.keys()))
-            if invalid:
-                print(' ,'.join(invalid) + ' columns not found')
-                sys.exit()
+        elif invalid := set(col_names).difference(set(columns.keys())):
+            print(' ,'.join(invalid) + ' columns not found')
+            sys.exit()
     else:
         col_names = standard_cols
     client = clickhouse_connect.get_client(compress=False)
