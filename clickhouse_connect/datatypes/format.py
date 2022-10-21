@@ -64,7 +64,7 @@ def _convert_arguments(*args, **kwargs) -> Dict[str, str]:
             fmt_map[args[x]] = args[x + 1]
     except (IndexError, TypeError, ValueError) as ex:
         raise ProgrammingError('Invalid type/format arguments for format method') from ex
-    fmt_map.update(kwargs)
+    fmt_map |= kwargs
     return fmt_map
 
 
@@ -74,7 +74,10 @@ def _matching_types(pattern: str, fmt: str = None) -> Sequence[Type[ClickHouseTy
     if not matches:
         ProgrammingError(f'Unrecognized ClickHouse type {pattern} when setting formats')
     if fmt:
-        invalid = [ch_type.__name__ for ch_type in matches if fmt not in ch_type.valid_formats]
-        if invalid:
+        if invalid := [
+            ch_type.__name__
+            for ch_type in matches
+            if fmt not in ch_type.valid_formats
+        ]:
             raise ProgrammingError(f"{fmt} is not a valid format for ClickHouse types {','.join(invalid)}.")
     return matches

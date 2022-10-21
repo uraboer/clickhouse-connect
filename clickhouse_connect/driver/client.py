@@ -33,14 +33,14 @@ class Client(metaclass=ABCMeta):
         self.limit = query_limit
         self.server_tz = pytz.UTC
         self.server_version, server_tz, self.database = \
-            tuple(self.command('SELECT version(), timezone(), database()', use_database=False))
+                tuple(self.command('SELECT version(), timezone(), database()', use_database=False))
         try:
             self.server_tz = pytz.timezone(server_tz)
         except UnknownTimeZoneError:
             logger.warning('Warning, server is using an unrecognized timezone %s, will use UTC default', server_tz)
         server_settings = self.query('SELECT name, value, changed, description, type, readonly FROM system.settings')
         self.server_settings = {row['name']: SettingDef(**row) for row in server_settings.named_results()}
-        if database and not database == '__default__':
+        if database and database != '__default__':
             self.database = database
         self.uri = uri
 
@@ -215,7 +215,7 @@ class Client(metaclass=ABCMeta):
         :param use_strings:  Convert ClickHouse String type to Arrow string type (instead of binary)
         :return: PyArrow.Table
         """
-        arrow_settings = {} if not settings else settings.copy()
+        arrow_settings = settings.copy() if settings else {}
         if 'output_format_arrow_string_as_string' not in arrow_settings:
             arrow_settings['output_format_arrow_string_as_string'] = '1' if use_strings else '0'
         return to_arrow(self.raw_query(query, parameters, arrow_settings, 'Arrow'))

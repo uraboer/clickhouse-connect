@@ -63,7 +63,7 @@ def random_type(depth: int = 0, low_card_perc: float = LOW_CARD_PERC,
                 keys.add(key)
                 values.add(value)
                 base_type += f"'{key}' = {value},"
-            base_type = base_type[:-1] + ')'
+            base_type = f'{base_type[:-1]})'
             low_card_ok = False
         if 'Int256' in base_type or 'Int128' in base_type:
             low_card_ok = False
@@ -117,8 +117,7 @@ def random_columns(cnt: int = 16, col_prefix: str = 'col'):
 
 def random_data(col_types: Sequence[ClickHouseType], num_rows: int = 1):
     data = [tuple(random_col_data(col_type, num_rows)) for col_type in col_types]
-    all_cols = [list(range(num_rows))]
-    all_cols.extend(data)
+    all_cols = [list(range(num_rows)), *data]
     return list(zip(*all_cols))
 
 

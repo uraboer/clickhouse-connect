@@ -152,16 +152,15 @@ class Enum(ChSqlaType, UserDefinedType):
 
     @classmethod
     def _validate(cls, keys: Sequence, values: Sequence):
-        bad_key = next((x for x in keys if not isinstance(x, str)), None)
-        if bad_key:
+        if bad_key := next((x for x in keys if not isinstance(x, str)), None):
             raise ArgumentError(f'ClickHouse enum key {bad_key} is not a string')
-        bad_value = next((x for x in values if not isinstance(x, int)), None)
-        if bad_value:
+        if bad_value := next((x for x in values if not isinstance(x, int)), None):
             raise ArgumentError(f'ClickHouse enum value {bad_value} is not an integer')
         value_min = -(2 ** (cls._size - 1))
         value_max = 2 ** (cls._size - 1) - 1
-        bad_value = next((x for x in values if x < value_min or x > value_max), None)
-        if bad_value:
+        if bad_value := next(
+            (x for x in values if x < value_min or x > value_max), None
+        ):
             raise ArgumentError(f'Clickhouse enum value {bad_value} is out of range')
 
 

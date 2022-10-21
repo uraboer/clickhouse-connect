@@ -24,9 +24,10 @@ class CreateDatabase(DDL):
         if engine:
             stmt += f' Engine {engine}'
             if engine == 'Replicated':
-                if not zoo_path:
+                if zoo_path:
+                    stmt += f" ('{zoo_path}', '{shard_name}', '{replica_name}'"
+                else:
                     raise ArgumentError('zoo_path is required for Replicated Database Engine')
-                stmt += f" ('{zoo_path}', '{shard_name}', '{replica_name}'"
         super().__init__(stmt)
 
 

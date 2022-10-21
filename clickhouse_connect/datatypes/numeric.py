@@ -82,25 +82,17 @@ class BigInt(ClickHouseType, registered=False):
         empty = bytes(b'\x00' * sz)
         ext = dest.extend
         if isinstance(first, str) or self.write_format() == 'string':
-            if self.nullable:
-                for x in column:
-                    if x:
-                        ext(int(x).to_bytes(sz, 'little', signed=signed))
-                    else:
-                        ext(empty)
-            else:
-                for x in column:
+            for x in column:
+                if self.nullable and x or not self.nullable:
                     ext(int(x).to_bytes(sz, 'little', signed=signed))
+                else:
+                    ext(empty)
         else:
-            if self.nullable:
-                for x in column:
-                    if x:
-                        ext(x.to_bytes(sz, 'little', signed=signed))
-                    else:
-                        ext(empty)
-            else:
-                for x in column:
+            for x in column:
+                if self.nullable and x or not self.nullable:
                     ext(x.to_bytes(sz, 'little', signed=signed))
+                else:
+                    ext(empty)
 
 
 class Int128(BigInt):
@@ -173,7 +165,7 @@ class Enum(ArrayType):
         first = self._first_value(column)
         if first is None or isinstance(first, int):
             if self.nullable:
-                column = [0 if not x else x for x in column]
+                column = [x or 0 for x in column]
             write_array(self._array_type, column, dest)
         else:
             lookup = self._name_map.get
@@ -275,7 +267,7 @@ class BigDecimal(Decimal, registered=False):
             if self.nullable:
                 v = self._zeros
                 for x in column:
-                    dest += v if not x else itb(int(x * mult), sz, 'little', signed=True)
+                    dest += itb(int(x * mult), sz, 'little', signed=True) if x else v
             else:
                 for x in column:
                     dest += itb(int(x * mult), sz, 'little', signed=True)

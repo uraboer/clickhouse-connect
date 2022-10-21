@@ -110,14 +110,16 @@ class QueryContext:
         """
         Creates Query context copy with parameters overridden/updated as appropriate
         """
-        return QueryContext(query or self.query,
-                            self.parameters.update(parameters or {}),
-                            self.settings.update(settings or {}),
-                            self.query_formats.update(query_formats or {}),
-                            self.column_formats.update(column_formats or {}),
-                            encoding if encoding else self.encoding,
-                            server_tz if server_tz else self.server_tz,
-                            use_none if use_none is not None else self.use_none)
+        return QueryContext(
+            query or self.query,
+            self.parameters.update(parameters or {}),
+            self.settings.update(settings or {}),
+            self.query_formats.update(query_formats or {}),
+            self.column_formats.update(column_formats or {}),
+            encoding or self.encoding,
+            server_tz or self.server_tz,
+            use_none if use_none is not None else self.use_none,
+        )
 
     def __enter__(self):
         query_settings.query_overrides = format_map(self.query_formats)
@@ -216,7 +218,11 @@ def format_query_value(value: Any, server_tz: tzinfo = pytz.UTC):
     if isinstance(value, tuple):
         return f"({', '.join(format_query_value(x, server_tz) for x in value)})"
     if isinstance(value, dict):
-        pairs = [format_query_value(k, server_tz) + ':' + format_query_value(v, server_tz) for k, v in value.items()]
+        pairs = [
+            f'{format_query_value(k, server_tz)}:{format_query_value(v, server_tz)}'
+            for k, v in value.items()
+        ]
+
         return f"{{{', '.join(pairs)}}}"
     if isinstance(value, Enum):
         return format_query_value(value.value, server_tz)
@@ -239,10 +245,7 @@ def remove_sql_comments(sql: str) -> str:
     def replacer(match):
         # if the 2nd group (capturing comments) is not None, it means we have captured a
         # non-quoted, actual comment string, so return nothing to remove the comment
-        if match.group(2):
-            return ''
-        # Otherwise we've actually captured a quoted string, so return it
-        return match.group(1)
+        return '' if match.group(2) else match.group(1)
 
     return comment_re.sub(replacer, sql)
 

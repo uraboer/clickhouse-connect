@@ -31,23 +31,10 @@ class String(ClickHouseType):
     def _write_native_binary(self, column: Union[Sequence, MutableSequence], dest: MutableSequence):
         encoding = self.encoding
         app = dest.append
-        if self.nullable:
-            for x in column:
-                if x is None:
-                    app(0)
-                else:
-                    y = x.encode(encoding)
-                    sz = len(y)
-                    while True:
-                        b = sz & 0x7f
-                        sz >>= 7
-                        if sz == 0:
-                            app(b)
-                            break
-                        app(0x80 | b)
-                    dest += y
-        else:
-            for x in column:
+        for x in column:
+            if self.nullable and x is None:
+                app(0)
+            else:
                 y = x.encode(encoding)
                 sz = len(y)
                 while True:
@@ -102,24 +89,14 @@ class FixedString(ClickHouseType):
         ext = dest.extend
         sz = self._byte_size
         empty = bytes((0,) * sz)
-        str_enc = str.encode
         enc = self.encoding
         first = self._first_value(column)
         if isinstance(first, str) or self.write_format() == 'string':
-            if self.nullable:
-                for x in column:
-                    if x is None:
-                        ext(empty)
-                    else:
-                        try:
-                            b = str_enc(x, enc)
-                        except UnicodeEncodeError:
-                            b = empty
-                        ext(b)
-                        if len(b) < sz:
-                            ext(empty[:-len(b)])
-            else:
-                for x in column:
+            str_enc = str.encode
+            for x in column:
+                if self.nullable and x is None:
+                    ext(empty)
+                else:
                     try:
                         b = str_enc(x, enc)
                     except UnicodeEncodeError:

@@ -20,10 +20,18 @@ def test_json(test_client: Client, test_table_engine: str):
     if not test_client.min_version('22.6.1'):
         pytest.skip('JSON test skipped for old version {test_client.server_version}')
     test_client.command('DROP TABLE IF EXISTS native_json_test')
-    test_client.command('CREATE TABLE native_json_test (key Int32, value JSON, e2 Int32)' +
-                        f'Engine {test_table_engine} ORDER BY key')
-    jv1 = {'key1': 337, 'value.2': 'vvvv', 'HKD@spéçiäl': 'Special K', 'blank': 'not_really_blank'}
+    test_client.command(
+        f'CREATE TABLE native_json_test (key Int32, value JSON, e2 Int32)Engine {test_table_engine} ORDER BY key'
+    )
+
     jv3 = {'key3': 752, 'value.2': 'v2_rules', 'blank': None}
+    jv1 = {
+        'key1': 337,
+        'value.2': 'vvvv',
+        'HKD@spéçiäl': 'Special K',
+        'blank': 'not_really_blank',
+    }
+
     test_client.insert('native_json_test', [[5, jv1, -44], [20, None, 5200], [25, jv3, 7302]])
 
     result = test_client.query('SELECT * FROM native_json_test ORDER BY key')

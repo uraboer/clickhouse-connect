@@ -30,8 +30,8 @@ def test_query_fuzz(test_client: Client, test_table_engine: str):
         test_client.command(create_stmt, settings={'flatten_nested': 0})
         test_client.insert('fuzz_test', data, col_names)
 
-        data_result = test_client.query('SELECT * FROM fuzz_test')
         if data_rows:
+            data_result = test_client.query('SELECT * FROM fuzz_test')
             assert data_result.column_names == col_names
             assert data_result.result_set == data
     unsupported_types.clear()

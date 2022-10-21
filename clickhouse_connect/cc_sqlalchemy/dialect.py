@@ -45,7 +45,7 @@ class ClickHouseDialect(DefaultDialect):
     def get_table_names(self, connection, schema=None, **kw):
         cmd = 'SHOW TABLES'
         if schema:
-            cmd += ' FROM ' + schema
+            cmd += f' FROM {schema}'
         return [row.name for row in connection.execute(cmd)]
 
     get_columns = staticmethod(reflect.get_columns)

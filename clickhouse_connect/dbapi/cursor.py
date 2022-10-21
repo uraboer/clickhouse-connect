@@ -103,9 +103,8 @@ class Cursor:
 
     def fetchall(self):
         self.check_valid()
-        ret = self.data
         self._ix = self._rowcount
-        return ret
+        return self.data
 
     def fetchone(self):
         self.check_valid()

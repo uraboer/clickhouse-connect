@@ -201,7 +201,7 @@ class ClickHouseType(ABC):
             self._write_native_low_card(column, dest)
         else:
             if self.nullable:
-                dest += bytes([1 if x is None else 0 for x in column])
+                dest += bytes(1 if x is None else 0 for x in column)
             self._write_native_binary(column, dest)
 
     def _read_native_low_card(self, source: Sequence, loc: int, num_rows: int, use_none=True):
@@ -264,9 +264,7 @@ class ClickHouseType(ABC):
     def _first_value(self, column: Sequence) -> Optional[Any]:
         if self.nullable:
             return next((x for x in column if x is not None), None)
-        if column:
-            return column[0]
-        return None
+        return column[0] if column else None
 
 
 EMPTY_TYPE_DEF = TypeDef()
@@ -291,7 +289,7 @@ class ArrayType(ClickHouseType, ABC, registered=False):
         if cls._array_type in ('i', 'I') and int_size == 2:
             cls._array_type = 'L' if cls._array_type.isupper() else 'l'
         if isinstance(cls._array_type, str) and cls._array_type:
-            cls._struct_type = '<' + cls._array_type
+            cls._struct_type = f'<{cls._array_type}'
 
     def _read_native_binary(self, source: Sequence, loc: int, num_rows: int):
         column, loc =  array_column(self._array_type, source, loc, num_rows)
